@@ -81,6 +81,7 @@
             display: flex;
             align-items: center;
             overflow: hidden;
+            flex-grow: 1;
         }
         
         .file-icon {
@@ -92,17 +93,47 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 70%;
+            max-width: 50%;
+            cursor: pointer;
+            text-decoration: underline;
+            color: #0066cc;
         }
         
-        .delete-btn {
-            background-color: #f44336;
-            color: white;
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .view-btn, .download-btn, .delete-btn {
             border: none;
             border-radius: 4px;
             padding: 5px 10px;
             cursor: pointer;
             transition: background-color 0.3s;
+            font-size: 12px;
+        }
+        
+        .view-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .view-btn:hover {
+            background-color: #3e8e41;
+        }
+        
+        .download-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .download-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
         }
         
         .delete-btn:hover {
@@ -112,6 +143,47 @@
         .preview {
             max-width: 100px;
             max-height: 100px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .modal-content img, .modal-content iframe {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .file-type-icon {
+            width: 24px;
+            height: 24px;
             margin-right: 10px;
         }
     </style>
@@ -132,11 +204,22 @@
         </div>
     </div>
 
+    <!-- Modal for viewing files -->
+    <div id="file-modal" class="modal">
+        <span class="close-btn" id="close-modal">&times;</span>
+        <div class="modal-content" id="modal-content">
+            <!-- Content will be inserted here -->
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const uploadBox = document.getElementById('upload-box');
             const fileInput = document.getElementById('file-input');
             const fileList = document.getElementById('file-list');
+            const modal = document.getElementById('file-modal');
+            const modalContent = document.getElementById('modal-content');
+            const closeModal = document.getElementById('close-modal');
             let files = [];
             
             // Click on box to open file dialog
@@ -174,6 +257,18 @@
                 }
             });
             
+            // Close modal when clicking X
+            closeModal.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside content
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
             // Process selected files
             function handleFiles(newFiles) {
                 for (let i = 0; i < newFiles.length; i++) {
@@ -198,6 +293,14 @@
                     const fileInfo = document.createElement('div');
                     fileInfo.className = 'file-info';
                     
+                    // File name with view/download on click
+                    const fileName = document.createElement('span');
+                    fileName.className = 'file-name';
+                    fileName.textContent = file.name;
+                    fileName.addEventListener('click', function() {
+                        viewFile(file);
+                    });
+                    
                     // Create preview for images
                     if (file.type.startsWith('image/')) {
                         const preview = document.createElement('img');
@@ -207,18 +310,36 @@
                             preview.src = e.target.result;
                         };
                         reader.readAsDataURL(file);
+                        preview.addEventListener('click', function() {
+                            viewFile(file);
+                        });
                         fileInfo.appendChild(preview);
                     } else {
                         const fileIcon = document.createElement('span');
                         fileIcon.className = 'file-icon';
-                        fileIcon.textContent = '📄';
+                        fileIcon.textContent = getFileIcon(file);
                         fileInfo.appendChild(fileIcon);
                     }
                     
-                    const fileName = document.createElement('span');
-                    fileName.className = 'file-name';
-                    fileName.textContent = file.name;
                     fileInfo.appendChild(fileName);
+                    
+                    // File actions
+                    const fileActions = document.createElement('div');
+                    fileActions.className = 'file-actions';
+                    
+                    const viewBtn = document.createElement('button');
+                    viewBtn.className = 'view-btn';
+                    viewBtn.textContent = 'View';
+                    viewBtn.addEventListener('click', function() {
+                        viewFile(file);
+                    });
+                    
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.className = 'download-btn';
+                    downloadBtn.textContent = 'Download';
+                    downloadBtn.addEventListener('click', function() {
+                        downloadFile(file);
+                    });
                     
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'delete-btn';
@@ -227,16 +348,92 @@
                         deleteFile(index);
                     });
                     
+                    fileActions.appendChild(viewBtn);
+                    fileActions.appendChild(downloadBtn);
+                    fileActions.appendChild(deleteBtn);
+                    
                     fileItem.appendChild(fileInfo);
-                    fileItem.appendChild(deleteBtn);
+                    fileItem.appendChild(fileActions);
                     fileList.appendChild(fileItem);
                 });
+            }
+            
+            // View file in modal
+            function viewFile(file) {
+                modalContent.innerHTML = '';
+                
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                    modalContent.appendChild(img);
+                } else if (file.type === 'application/pdf') {
+                    const iframe = document.createElement('iframe');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        iframe.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                    iframe.style.width = '80%';
+                    iframe.style.height = '80%';
+                    modalContent.appendChild(iframe);
+                } else if (file.type.startsWith('text/')) {
+                    const pre = document.createElement('pre');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        pre.textContent = e.target.result;
+                    };
+                    reader.readAsText(file);
+                    pre.style.color = 'white';
+                    pre.style.padding = '20px';
+                    pre.style.backgroundColor = '#333';
+                    pre.style.borderRadius = '5px';
+                    pre.style.maxHeight = '80vh';
+                    pre.style.overflow = 'auto';
+                    modalContent.appendChild(pre);
+                } else {
+                    const message = document.createElement('div');
+                    message.style.color = 'white';
+                    message.style.fontSize = '20px';
+                    message.textContent = 'Preview not available for this file type. Please download to view.';
+                    modalContent.appendChild(message);
+                }
+                
+                modal.style.display = 'block';
+            }
+            
+            // Download file
+            function downloadFile(file) {
+                const url = URL.createObjectURL(file);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             }
             
             // Delete a file
             function deleteFile(index) {
                 files.splice(index, 1);
                 renderFileList();
+            }
+            
+            // Get appropriate icon for file type
+            function getFileIcon(file) {
+                if (file.type.startsWith('image/')) return '🖼️';
+                if (file.type === 'application/pdf') return '📕';
+                if (file.type.startsWith('text/')) return '📝';
+                if (file.type.includes('spreadsheet')) return '📊';
+                if (file.type.includes('presentation')) return '📑';
+                if (file.type.includes('zip') || file.type.includes('compressed')) return '🗜️';
+                if (file.type.includes('audio')) return '🎵';
+                if (file.type.includes('video')) return '🎬';
+                return '📄';
             }
             
             // Initialize with empty state
