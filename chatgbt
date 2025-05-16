@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File & Image Uploader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 80%;
+            max-width: 600px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .upload-box {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-box:hover {
+            border-color: #4CAF50;
+            background-color: #f9f9f9;
+        }
+        
+        .upload-box i {
+            font-size: 48px;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .upload-box p {
+            margin: 0;
+            color: #666;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .file-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .file-icon {
+            margin-right: 10px;
+            color: #4CAF50;
+        }
+        
+        .file-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 70%;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .preview {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>File & Image Uploader</h1>
+        
+        <div class="upload-box" id="upload-box">
+            <i>📁</i>
+            <p>Drag & drop files here or click to browse</p>
+        </div>
+        
+        <input type="file" id="file-input" multiple>
+        
+        <div class="file-list" id="file-list">
+            <!-- Files will be listed here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadBox = document.getElementById('upload-box');
+            const fileInput = document.getElementById('file-input');
+            const fileList = document.getElementById('file-list');
+            let files = [];
+            
+            // Click on box to open file dialog
+            uploadBox.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Handle drag and drop
+            uploadBox.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadBox.style.borderColor = '#4CAF50';
+                uploadBox.style.backgroundColor = '#f0fff0';
+            });
+            
+            uploadBox.addEventListener('dragleave', function() {
+                uploadBox.style.borderColor = '#ccc';
+                uploadBox.style.backgroundColor = '#f9f9f9';
+            });
+            
+            uploadBox.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadBox.style.borderColor = '#ccc';
+                uploadBox.style.backgroundColor = '#f9f9f9';
+                
+                if (e.dataTransfer.files.length) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+            
+            // Handle file selection
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length) {
+                    handleFiles(fileInput.files);
+                    fileInput.value = ''; // Reset input to allow selecting same file again
+                }
+            });
+            
+            // Process selected files
+            function handleFiles(newFiles) {
+                for (let i = 0; i < newFiles.length; i++) {
+                    files.push(newFiles[i]);
+                }
+                renderFileList();
+            }
+            
+            // Render the file list
+            function renderFileList() {
+                fileList.innerHTML = '';
+                
+                if (files.length === 0) {
+                    fileList.innerHTML = '<p>No files uploaded yet.</p>';
+                    return;
+                }
+                
+                files.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    
+                    const fileInfo = document.createElement('div');
+                    fileInfo.className = 'file-info';
+                    
+                    // Create preview for images
+                    if (file.type.startsWith('image/')) {
+                        const preview = document.createElement('img');
+                        preview.className = 'preview';
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            preview.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                        fileInfo.appendChild(preview);
+                    } else {
+                        const fileIcon = document.createElement('span');
+                        fileIcon.className = 'file-icon';
+                        fileIcon.textContent = '📄';
+                        fileInfo.appendChild(fileIcon);
+                    }
+                    
+                    const fileName = document.createElement('span');
+                    fileName.className = 'file-name';
+                    fileName.textContent = file.name;
+                    fileInfo.appendChild(fileName);
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.addEventListener('click', function() {
+                        deleteFile(index);
+                    });
+                    
+                    fileItem.appendChild(fileInfo);
+                    fileItem.appendChild(deleteBtn);
+                    fileList.appendChild(fileItem);
+                });
+            }
+            
+            // Delete a file
+            function deleteFile(index) {
+                files.splice(index, 1);
+                renderFileList();
+            }
+            
+            // Initialize with empty state
+            renderFileList();
+        });
+    </script>
+</body>
+</html>
