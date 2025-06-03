@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // جلب الملفات من الخادم
     async function fetchFiles() {
         try {
-            const response = await fetch('https://your-app-name.herokuapp.com/files');
+            const response = await fetch('https://ahmedchatgbt.onrender.com');
             const files = await response.json();
             
             if(files && files.length > 0) {
