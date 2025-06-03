@@ -1,3 +1,5 @@
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -69,6 +71,6 @@ app.get('/files', (req, res) => {
 
 // تشغيل الخادم
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
