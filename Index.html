@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع رفع الملفات</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="upload-container">
+        <h2>رفع ملفات أو صور جديدة</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="fileInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+            <button type="submit">رفع الملفات</button>
+        </form>
+        <div class="upload-progress" id="progressBar" style="display:none;">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <div class="gallery-container">
+        <div class="gallery-header">
+            <h2>ملفاتك</h2>
+            <div class="view-options">
+                <button class="view-btn active" data-view="grid">عرض شبكي</button>
+                <button class="view-btn" data-view="list">عرض قائمة</button>
+            </div>
+        </div>
+        
+        <div class="gallery" id="fileGallery">
+            <!-- سيتم ملؤها ديناميكيًا بالملفات -->
+        </div>
+    </div>
+
+    <div class="modal" id="fileModal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-body" id="modalContent">
+                <!-- محتوى الملف المعروض -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
