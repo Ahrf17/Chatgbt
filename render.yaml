@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: file-upload-website
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    env: node
+    envVars:
+      - key: NODE_ENV
+        value: production
